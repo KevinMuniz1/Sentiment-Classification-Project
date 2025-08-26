@@ -1,1 +1,1 @@
-# Sentiment-Analysis-Project
+# Sentiment-Classification-Project
