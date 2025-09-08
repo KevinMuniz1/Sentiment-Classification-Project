@@ -24,11 +24,11 @@ class FeatureExtractor(object):
         for word in sentence:
             feature = "UNI:" + word
             idx = self.indexer.index_of(feature)
-            if idx == -1:  # unseen
+            if idx == -1:  # if it has not been seen yet
                 if add_to_indexer:
                     idx = self.indexer.add_and_get_index(feature)
                 else:
-                    continue  # skip unseen at test time
+                    continue  # dont do anything with the unseen 
             feats[idx] += 1
         return feats
 
@@ -62,7 +62,7 @@ class BetterFeatureExtractor(FeatureExtractor):
 
     def extract_features(self, sentence: List[str], add_to_indexer: bool=False) -> Counter:
         feats = Counter()
-        # lowercase + unigrams + bigrams
+        # this add together the lowercase letters + unigrams + bigrams
         sentence = [w.lower() for w in sentence]
         # unigrams
         for word in sentence:
@@ -123,7 +123,6 @@ def train_perceptron(train_exs: List[SentimentExample], feat_extractor: FeatureE
             score = sum(weights[idx] * val for idx, val in feats.items())
             pred = 1 if score >= 0 else 0
             if pred != ex.label:
-                # update rule
                 for idx, val in feats.items():
                     weights[idx] += (1 if ex.label == 1 else -1) * val
     return PerceptronClassifier(weights, feat_extractor)
@@ -162,11 +161,9 @@ def train_logistic_regression(train_exs: List[SentimentExample], feat_extractor:
 # Training Dispatcher
 
 def train_model(args, train_exs, dev_exs):
-    # Handle trivial case separately so feat_extractor is never None later
     if args.model == "TRIVIAL":
         return TrivialSentimentClassifier()
 
-    # Otherwise, we need a feature extractor
     if args.feats == "UNIGRAM":
         feat_extractor = UnigramFeatureExtractor(Indexer())
     elif args.feats == "BIGRAM":
@@ -176,7 +173,7 @@ def train_model(args, train_exs, dev_exs):
     else:
         raise Exception("Pass in UNIGRAM, BIGRAM, or BETTER")
 
-    # Train the model
+    # Trains the model
     if args.model == "PERCEPTRON":
         return train_perceptron(train_exs, feat_extractor)
     elif args.model == "LR":
